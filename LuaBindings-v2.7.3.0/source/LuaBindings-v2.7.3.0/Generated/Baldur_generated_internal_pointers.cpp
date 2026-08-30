@@ -53,6 +53,7 @@ type_dimmGetResObject p_dimmGetResObject;
 type_dimmResolveFileName p_dimmResolveFileName;
 type_dimmServiceFromMemory p_dimmServiceFromMemory;
 type_findMenu p_findMenu;
+type_popupActive p_popupActive;
 type_rand p_rand;
 type_restoreMenuStack p_restoreMenuStack;
 type_saveMenuStack p_saveMenuStack;
@@ -398,6 +399,7 @@ void InitBindingsInternal() {
 	attemptFillPointer(TEXT("dimmResolveFileName"), p_dimmResolveFileName);
 	attemptFillPointer(TEXT("dimmServiceFromMemory"), p_dimmServiceFromMemory);
 	attemptFillPointer(TEXT("findMenu"), p_findMenu);
+	attemptFillPointer(TEXT("popupActive"), p_popupActive);
 	attemptFillPointer(TEXT("rand"), p_rand);
 	attemptFillPointer(TEXT("restoreMenuStack"), p_restoreMenuStack);
 	attemptFillPointer(TEXT("saveMenuStack"), p_saveMenuStack);

@@ -1585,7 +1585,7 @@ struct CAITrigger
 
 struct CGameSave
 {
-	$nobinding void SetInputMode(uint mode);
+	void SetInputMode(uint mode);
 };
 
 struct CGameTrigger : CGameAIBase
@@ -1668,6 +1668,7 @@ CRes* __cdecl dimmGetResObject(const CResRef* cResRef, int nType, bool createIfN
 primitive const char* __cdecl dimmResolveFileName(primitive const char* fileName);
 void __cdecl dimmServiceFromMemory(CRes* pRes, void* pData, int nSize, bool useTempOverride, bool makeCopy);
 uiMenu* findMenu(primitive const char* name, int panel, int state);
+bool __cdecl popupActive();
 int rand();
 void restoreMenuStack();
 void saveMenuStack();

@@ -9733,6 +9733,9 @@ extern type_dimmServiceFromMemory p_dimmServiceFromMemory;
 typedef uiMenu* (*type_findMenu)(const char* name, int panel, int state);
 extern type_findMenu p_findMenu;
 
+typedef bool (__cdecl *type_popupActive)();
+extern type_popupActive p_popupActive;
+
 typedef int (*type_rand)();
 extern type_rand p_rand;
 
