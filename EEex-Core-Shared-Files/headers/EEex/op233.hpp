@@ -73,7 +73,7 @@ namespace EEex::Op233 {
 	// in existing effect fields. Nothing here outlives the call or allocates.
 	template<typename Effect>
 	struct DriverFrame {
-		inline static thread_local DriverFrame* current = nullptr;
+		inline static DriverFrame* current = nullptr;
 		Effect* driver;
 		Effect* child;
 		DriverFrame* previous;
@@ -90,6 +90,20 @@ namespace EEex::Op233 {
 		DriverFrame(const DriverFrame&) = delete;
 		DriverFrame& operator=(const DriverFrame&) = delete;
 	};
+
+	// Visits each driver in the contiguous chain that applied pEffect, innermost
+	// first. A driver nested inside another (e.g. op182 -> EFF(op177) -> op233) is
+	// itself reconstructed every pass; only the outermost driver persists. Stops at
+	// the first frame whose child is not the current link, so an unrelated effect
+	// applied by a callback never borrows an outer driver's cache.
+	template<typename Effect, typename Fn>
+	void forEachOwningDriver(Effect* pEffect, Fn&& fn) {
+		auto* child = pEffect;
+		for (auto* frame = DriverFrame<Effect>::current; frame != nullptr && frame->child == child; frame = frame->previous) {
+			fn(frame->driver);
+			child = frame->driver;
+		}
+	}
 
 	template<typename Effect, typename Sprite>
 	int applyDrivenEffect(Effect* pChild, Sprite* pSprite, Effect* pDriver) {
@@ -112,14 +126,10 @@ namespace EEex::Op233 {
 			return 0;
 		}
 
-		// Only follow adjacent driver -> child links ending at this very effect.
-		// An unrelated effect applied by a callback must never borrow the outer
-		// driver's cache. The outermost contiguous driver survives reconstruction.
-		auto* first = DriverFrame<Effect>::current;
+		// The outermost owning driver is the only instance that survives
+		// reconstruction, so the cached delta is read from it.
 		auto* root = pEffect;
-		for (auto* frame = first; frame != nullptr && frame->child == root; frame = frame->previous) {
-			root = frame->driver;
-		}
+		forEachOwningDriver(pEffect, [&](Effect* pDriver) { root = pDriver; });
 
 		std::uint32_t delta;
 		if (pEffect->m_firstCall != 0) {
@@ -139,11 +149,9 @@ namespace EEex::Op233 {
 		// negative deltas and overflow defined in C++, without adding a clamp.
 		const auto cached = std::bit_cast<std::int32_t>(delta);
 		pEffect->m_effectAmount2 = cached;
-		auto* child = pEffect;
-		for (auto* frame = first; frame != nullptr && frame->child == child; frame = frame->previous) {
-			frame->driver->m_effectAmount2 = cached;
-			child = frame->driver;
-		}
+		// Every link receives the delta, so each reconstruction starts correctly
+		// whether or not that driver's native code copies param3 back.
+		forEachOwningDriver(pEffect, [&](Effect* pDriver) { pDriver->m_effectAmount2 = cached; });
 		auto& bonus = pSprite->m_bonusStats.*members[index];
 		bonus = std::bit_cast<std::int32_t>(static_cast<std::uint32_t>(bonus) + delta);
 		return 1;
